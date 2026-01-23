@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TheTutorPath - Collaborative Whiteboard</title>
+    <title>TheTutorPath Whiteboard</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
@@ -26,7 +26,7 @@
             --text-main: #111827;
             --text-sub: #6b7280;
             --border: #e5e7eb;
-            --sidebar-width: 340px;
+            --panel-width: 280px;
             --header-height: 60px;
         }
 
@@ -34,6 +34,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            user-select: none;
         }
 
         body {
@@ -72,7 +73,6 @@
         .header-actions {
             display: flex;
             gap: 12px;
-            align-items: center;
         }
 
         .btn {
@@ -104,48 +104,40 @@
         .btn-primary:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
-        }
-
-        /* Layout */
-        #app-layout {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
         }
 
         /* Main Workspace */
         #workspace {
-            flex: 1;
             position: relative;
-            background: #e5e5e5;
-            display: flex;
-            flex-direction: column;
+            flex: 1;
             overflow: hidden;
-        }
-
-        #whiteboard-container {
-            flex: 1;
-            position: relative;
-            background: white;
-            overflow: auto;
+            background: #e5e5e5;
+            /* Contrast for canvas area */
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
 
-        #canvas-wrapper {
+        #whiteboard-container {
             position: relative;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: 100%;
             background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
+        /* Canvases need to be stacked */
         #pdf-render,
         #drawing-canvas {
             position: absolute;
             top: 0;
             left: 0;
-            cursor: crosshair;
+            transform-origin: top left;
         }
 
         #pdf-render {
@@ -154,9 +146,10 @@
 
         #drawing-canvas {
             z-index: 2;
+            cursor: crosshair;
         }
 
-        /* Toolbar */
+        /* Floating Toolbar */
         .toolbar {
             position: absolute;
             left: 20px;
@@ -208,231 +201,313 @@
             margin: 4px auto;
         }
 
-        /* Sidebar (Collaboration) */
-        #collab-sidebar {
-            width: var(--sidebar-width);
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 320px;
             background: var(--surface);
-            border-left: 1px solid var(--border);
-            display: flex;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            z-index: 60;
+            display: none;
+            /* Hidden by default */
             flex-direction: column;
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .sidebar-section {
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .modal-header {
             padding: 16px;
             border-bottom: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            max-height: 50%;
-            flex-shrink: 0;
-        }
-
-        .section-header {
-            font-weight: 600;
-            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* Video Container */
-        #video-grid {
+        .modal-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .modal-body {
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Dictionary Styles */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .def-group {
+            margin-bottom: 12px;
+        }
+
+        .part-of-speech {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .definition {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        /* Calculator Styles */
+        .calc-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .calc-display {
+            grid-column: span 4;
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: right;
+            font-size: 1.5rem;
+            font-family: monospace;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            min-height: 60px;
+            word-break: break-all;
+        }
+
+        .calc-btn {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .calc-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .calc-btn.op {
+            background: #eef2ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .calc-btn.eq {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Connection Modal Specifics */
+        .conn-group {
+            margin-bottom: 16px;
+        }
+
+        .conn-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .role-select {
+            display: flex;
             gap: 8px;
             margin-bottom: 12px;
         }
 
-        .video-box {
-            position: relative;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
+        .role-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
         }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-label {
-            position: absolute;
-            bottom: 4px;
-            left: 8px;
+        .role-btn.active {
+            background: var(--primary);
             color: white;
+            border-color: var(--primary);
+        }
+
+        .id-display {
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 100px;
             font-size: 0.75rem;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-            background: rgba(0, 0, 0, 0.4);
-            padding: 2px 6px;
-            border-radius: 4px;
+            font-weight: 600;
+            background: #e5e7eb;
+            color: var(--text-sub);
         }
 
-        #self-video {
-            transform: scaleX(-1);
-            /* Mirror self */
+        .status-badge.connected {
+            background: #dcfce7;
+            color: #166534;
         }
 
-        /* Participants */
-        #participants-list {
+        .status-badge.connecting {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        /* Audio Meter */
+        .audio-test-area {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .mic-meter-container {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .mic-meter-bar {
+            height: 100%;
+            width: 0%;
+            background: #10b981;
+            transition: width 0.1s;
+        }
+
+        /* Participant List */
+        .participant-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 150px;
-            overflow-y: auto;
+            margin-top: 16px;
         }
 
         .participant-card {
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: #f9fafb;
-            padding: 8px;
+            padding: 12px;
+            background: white;
+            border: 1px solid var(--border);
             border-radius: 8px;
-        }
-
-        /* Chat */
-        #chat-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border-bottom: none;
-            max-height: none;
-        }
-
-        #chat-history {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 4px;
-            display: flex;
-            flex-direction: column;
             gap: 12px;
         }
 
-        .chat-msg {
-            font-size: 0.9rem;
-            line-height: 1.4;
+        .participant-card.local {
+            background: #f9faff;
         }
 
-        .chat-header {
+        .p-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e5e7eb;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 2px;
-        }
-
-        .chat-sender {
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-
-        .chat-time {
-            font-size: 0.7rem;
+            align-items: center;
+            justify-content: center;
             color: var(--text-sub);
+            font-size: 1rem;
         }
 
-        .chat-text {
-            color: var(--text-main);
-            background: #f3f4f6;
-            padding: 8px;
-            border-radius: 0 8px 8px 8px;
-            display: inline-block;
-        }
-
-        .chat-msg.self {
-            text-align: right;
-        }
-
-        .chat-msg.self .chat-text {
+        .p-avatar.tutor {
             background: #e0e7ff;
             color: var(--primary);
-            border-radius: 8px 0 8px 8px;
         }
 
-        #chat-input-area {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
+        .p-avatar.student {
+            background: #fdf4ff;
+            color: #d946ef;
         }
 
-        #chat-input {
+        .p-info {
             flex: 1;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-family: inherit;
         }
 
-        /* Setup Overlay */
-        #setup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            /* Darker for focus */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            backdrop-filter: blur(4px);
+        .p-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            display: block;
         }
 
-        .setup-card {
-            background: white;
-            padding: 32px;
-            border-radius: 16px;
-            width: 400px;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        .p-role {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
-        /* Modals */
-        .modal {
-            position: absolute;
-            top: 80px;
-            left: 80px;
-            width: 300px;
-            background: var(--surface);
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-            z-index: 60;
-            display: none;
-            flexDirection: column;
+        .p-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #d1d5db;
         }
 
-        #pdf-controls-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #fff;
-            padding: 8px;
-            border-radius: 8px;
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 40;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        #progress-bar-container {
-            width: 100%;
-            height: 4px;
-            background: #e5e7eb;
-            margin-top: 8px;
-            border-radius: 2px;
-            display: none;
-        }
-
-        #progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--primary);
-            border-radius: 2px;
-            transition: width 0.1s;
+        .p-status.online {
+            background: #10b981;
+            box-shadow: 0 0 0 2px #dcfce7;
         }
     </style>
 </head>
@@ -442,503 +517,909 @@
     <header>
         <div class="logo"><i class="fa-solid fa-graduation-cap" style="margin-right: 8px;"></i>thetutorpath</div>
 
+        <!-- PDF Controls (Hidden by default) -->
+        <div id="pdf-controls"
+            style="display: none; align-items: center; gap: 8px; background: #f3f4f6; padding: 4px 8px; border-radius: 8px;">
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changePage(-1)"
+                title="Previous Page">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span id="page-num" style="font-size: 0.9rem; font-weight: 500;">1 / 1</span>
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changePage(1)" title="Next Page">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <div style="width: 1px; height: 16px; background: #d1d5db; margin: 0 4px;"></div>
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changeZoom(-0.2)"
+                title="Zoom Out">
+                <i class="fa-solid fa-minus"></i>
+            </button>
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="fitToScreen()"
+                title="Fit to Screen">
+                <i class="fa-solid fa-compress"></i>
+            </button>
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changeZoom(0.2)" title="Zoom In">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+
         <div class="header-actions">
-            <!-- Connection Status -->
-            <div id="connection-indicator" class="status-badge"
-                style="display: none; padding: 6px 12px; background: #fee2e2; color: #ef4444; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                <i class="fa-solid fa-link-slash"></i> Disconnected
-            </div>
-
-            <div id="file-status" style="font-size: 0.8rem; color: var(--text-sub); display: none;">
-                <i class="fa-solid fa-spinner fa-spin"></i> <span id="file-status-text">Syncing...</span>
-            </div>
-
+            <button class="btn" onclick="toggleModal('conn-modal')" id="btn-connect">
+                <i class="fa-solid fa-headset"></i> Connect
+            </button>
             <input type="file" id="file-upload" accept="application/pdf" style="display: none;">
+            <button class="btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i> Tools
+            </button>
             <button class="btn" onclick="document.getElementById('file-upload').click()">
                 <i class="fa-regular fa-file-pdf"></i> Upload PDF
             </button>
-            <button class="btn" onclick="clearBoard(true)">
-                <i class="fa-solid fa-trash-can"></i> Clear
+            <button class="btn" onclick="clearBoard()">
+                <i class="fa-solid fa-trash-can"></i> Clear Board
             </button>
             <button class="btn btn-primary" onclick="window.print()">
-                <i class="fa-solid fa-download"></i> Save
+                <i class="fa-solid fa-download"></i> Save / Print
             </button>
         </div>
     </header>
 
-    <div id="app-layout">
-        <!-- Main Workspace -->
-        <div id="workspace">
-            <aside class="toolbar">
-                <button class="tool-btn active" onclick="setTool('pen', this)"><i class="fa-solid fa-pen"></i></button>
-                <button class="tool-btn" onclick="setTool('eraser', this)"><i class="fa-solid fa-eraser"></i></button>
-                <button class="tool-btn" onclick="setTool('text', this)"><i class="fa-solid fa-font"></i></button>
-                <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
-                <div class="color-picker" style="background: #000;" onclick="setColor('#000000')"></div>
-                <div class="color-picker" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
-                <div class="color-picker" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
-                <div class="color-picker" style="background: #10b981;" onclick="setColor('#10b981')"></div>
-                <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
-                <button class="tool-btn" onclick="toggleModal('calc-modal')"><i
-                        class="fa-solid fa-calculator"></i></button>
-                <button class="tool-btn" onclick="toggleModal('dict-modal')"><i class="fa-solid fa-book"></i></button>
-            </aside>
-
-            <div id="pdf-controls-bar" style="display: none;">
-                <button class="btn" onclick="changePage(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                <span id="page-num">1 / 1</span>
-                <button class="btn" onclick="changePage(1)"><i class="fa-solid fa-chevron-right"></i></button>
-                <div style="width: 1px; height: 16px; background: #e5e7eb; margin: 0 8px;"></div>
-                <button class="btn" onclick="changeZoom(-0.2)"><i class="fa-solid fa-minus"></i></button>
-                <button class="btn" onclick="changeZoom(0.2)"><i class="fa-solid fa-plus"></i></button>
-            </div>
-
-            <div id="whiteboard-container">
-                <div id="canvas-wrapper">
-                    <canvas id="pdf-render"></canvas>
-                    <canvas id="drawing-canvas"></canvas>
-                </div>
-            </div>
-
-            <!-- Text Input Overlay -->
-            <div id="text-overlay"
-                style="display: none; position: absolute; z-index: 100; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                <textarea id="text-input" rows="2" style="width: 200px; padding: 8px;"></textarea>
-                <button class="btn btn-primary" onclick="confirmText()"
-                    style="margin-top: 4px; width: 100%;">Add</button>
-            </div>
-
-            <!-- Modals -->
-            <div id="dict-modal" class="modal">
-                <div
-                    style="padding: 16px; border-bottom: 1px solid #e5e7eb; display:flex; justify-content:space-between;">
-                    <b>Dictionary</b> <span onclick="toggleModal('dict-modal')" style="cursor:pointer">&times;</span>
-                </div>
-                <div style="padding: 16px;">
-                    <input type="text" id="dict-input" class="chat-input" placeholder="Word..."
-                        style="width:100%; margin-bottom: 8px; padding: 6px;">
-                    <button class="btn btn-primary" onclick="lookupWord()" style="width:100%">Search</button>
-                    <div id="dict-results" style="margin-top: 12px; font-size: 0.9rem;"></div>
-                </div>
-            </div>
-
-            <div id="calc-modal" class="modal">
-                <div
-                    style="padding: 16px; border-bottom: 1px solid #e5e7eb; display:flex; justify-content:space-between;">
-                    <b>Calculator</b> <span onclick="toggleModal('calc-modal')" style="cursor:pointer">&times;</span>
-                </div>
-                <div style="padding: 16px;">
-                    <input id="calc-display"
-                        style="width:100%; padding: 10px; margin-bottom: 10px; text-align: right; font-family: monospace; font-size: 1.2rem;"
-                        readonly>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
-                        <button onclick="calcInput('7')">7</button><button onclick="calcInput('8')">8</button><button
-                            onclick="calcInput('9')">9</button><button onclick="calcInput('/')">/</button>
-                        <button onclick="calcInput('4')">4</button><button onclick="calcInput('5')">5</button><button
-                            onclick="calcInput('6')">6</button><button onclick="calcInput('*')">*</button>
-                        <button onclick="calcInput('1')">1</button><button onclick="calcInput('2')">2</button><button
-                            onclick="calcInput('3')">3</button><button onclick="calcInput('-')">-</button>
-                        <button onclick="calcInput('0')">0</button><button onclick="calcInput('.')">.</button><button
-                            onclick="calcClear()">C</button><button onclick="calcInput('+')">+</button>
-                        <button onclick="calcSolve()"
-                            style="grid-column: span 4; background: var(--primary); color: white;">=</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <aside id="collab-sidebar">
-            <div class="sidebar-section" style="background:#000; padding:8px;">
-                <div id="video-grid">
-                    <div class="video-box">
-                        <video id="self-video" autoplay muted playsinline></video>
-                        <span class="video-label">Me (You)</span>
-                    </div>
-                    <div class="video-box" id="remote-video-container" style="display:none;">
-                        <video id="remote-video" autoplay playsinline></video>
-                        <span class="video-label">Peer</span>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:center; gap:12px;">
-                    <button class="tool-btn" onclick="toggleMute()" id="mute-btn"
-                        style="background:rgba(255,255,255,0.2); color:white;"><i
-                            class="fa-solid fa-microphone"></i></button>
-                    <button class="tool-btn" onclick="toggleVideo()" id="video-btn"
-                        style="background:rgba(255,255,255,0.2); color:white;"><i
-                            class="fa-solid fa-video"></i></button>
-                    <button class="tool-btn" onclick="location.reload()" style="background:#ef4444; color:white;"><i
-                            class="fa-solid fa-phone-slash"></i></button>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="section-header">Participants</div>
-                <div id="participants-list"></div>
-            </div>
-
-            <div class="sidebar-section" id="chat-section">
-                <div class="section-header">Chat</div>
-                <div id="chat-history"></div>
-                <div id="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Type a message..."
-                        onkeypress="handleChatKey(event)">
-                    <button class="btn btn-primary" onclick="sendChat()"><i
-                            class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
+    <div id="workspace">
+        <aside class="toolbar">
+            <button class="tool-btn active" onclick="setTool('pen', this)" title="Pen">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="tool-btn" onclick="setTool('eraser', this)" title="Eraser">
+                <i class="fa-solid fa-eraser"></i>
+            </button>
+            <button class="tool-btn" onclick="setTool('text', this)" title="Text & Speak">
+                <i class="fa-solid fa-font"></i>
+            </button>
+            <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+            <div class="color-picker" style="background: #000;" onclick="setColor('#000000')"></div>
+            <div class="color-picker" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
+            <div class="color-picker" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
+            <div class="color-picker" style="background: #10b981;" onclick="setColor('#10b981')"></div>
+            <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+            <button class="tool-btn" onclick="toggleModal('calc-modal')" title="Calculator">
+                <i class="fa-solid fa-calculator"></i>
+            </button>
+            <button class="tool-btn" onclick="toggleModal('dict-modal')" title="Dictionary">
+                <i class="fa-solid fa-book"></i>
+            </button>
         </aside>
+
+        <div id="whiteboard-container">
+            <canvas id="pdf-render"></canvas>
+            <canvas id="drawing-canvas"></canvas>
+        </div>
     </div>
 
-    <!-- Login Overlay -->
-    <div id="setup-overlay">
-        <div class="setup-card">
-            <h2 style="margin-bottom: 24px;">Join Classroom</h2>
-            <div style="margin-bottom: 16px; text-align: left;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Your Name</label>
-                <input type="text" id="setup-name"
-                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);"
-                    placeholder="Ex. John Doe">
+    <!-- Text Input Overlay for Speech & Typing -->
+    <div id="text-overlay"
+        style="display: none; position: absolute; z-index: 100; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--border);">
+        <textarea id="text-input" rows="2"
+            style="width: 200px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-family: 'Outfit', sans-serif; resize: both;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+            <button class="btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="speakText()">
+                <i class="fa-solid fa-volume-high"></i> Speak
+            </button>
+            <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="confirmText()">
+                <i class="fa-solid fa-check"></i> Add
+            </button>
+        </div>
+    </div>
+
+    <!-- Connection / VoIP Modal -->
+    <div id="conn-modal" class="modal" style="right: 20px; width: 340px;">
+        <div class="modal-header">
+            <div class="modal-title">Voice & Connection</div>
+            <button class="close-modal" onclick="toggleModal('conn-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Audio Check Section -->
+            <div id="audio-check-section" class="audio-test-area">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span class="conn-label" style="margin:0">Audio Setup</span>
+                    <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="testSpeaker()">
+                        <i class="fa-solid fa-volume-high"></i> Test Speaker
+                    </button>
+                </div>
+                <div class="mic-meter-container">
+                    <div id="mic-level" class="mic-meter-bar"></div>
+                </div>
+                <button class="btn" style="width:100%; justify-content:center; font-size:0.85rem;"
+                    onclick="initAudioCheck()" id="btn-check-mic">
+                    <i class="fa-solid fa-microphone"></i> Enable & Check Microphone
+                </button>
             </div>
 
-            <div style="margin-bottom: 24px; display: flex; gap: 12px;">
-                <button class="btn" style="flex: 1; justify-content: center;" onclick="selectSetupRole('student')"
-                    id="btn-role-student">Student</button>
-                <button class="btn" style="flex: 1; justify-content: center;" onclick="selectSetupRole('tutor')"
-                    id="btn-role-tutor">Tutor</button>
+            <div id="conn-setup">
+                <div class="conn-group">
+                    <label class="conn-label">Your Name</label>
+                    <input type="text" id="my-name" class="search-input" placeholder="Enter your name" value="Guest">
+                </div>
+                <div class="conn-group">
+                    <label class="conn-label">I am a...</label>
+                    <div class="role-select">
+                        <button class="role-btn active" onclick="setRole('student')">Student</button>
+                        <button class="role-btn" onclick="setRole('tutor')">Tutor</button>
+                    </div>
+                </div>
+
+                <div id="tutor-section" style="display: none;">
+                    <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-sub);">Share this ID with the
+                        student:</p>
+                    <div class="id-display" onclick="copyId()" title="Click to copy" id="my-peer-id">Generating ID...
+                    </div>
+                    <button class="btn btn-primary" onclick="initPeer(true)" style="width: 100%;">Create
+                        Session (Host)</button>
+                </div>
+
+                <div id="student-section">
+                    <p style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-sub);">Enter Tutor's ID to join:
+                    </p>
+                    <input type="text" id="target-id" class="search-input" placeholder="Paste ID here"
+                        style="margin-bottom: 8px;">
+                    <button class="btn btn-primary" onclick="joinSession()" style="width: 100%;">Join Session</button>
+                </div>
             </div>
 
-            <div id="tutor-start" style="display: none;">
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;"
-                    onclick="startSession()">Start New Session</button>
+            <div id="conn-active" style="display: none;">
+                <div style="text-align: center;">
+                    <div class="status-badge connected">
+                        <span style="width: 8px; height: 8px; background: currentColor; border-radius: 50%;"></span>
+                        Live Session
+                    </div>
+                </div>
+
+                <div class="participant-list" id="participant-list">
+                    <!-- Cards injected via JS -->
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
+                    <button class="tool-btn" onclick="toggleMute()" id="mute-btn"
+                        style="background: #fee2e2; color: #ef4444; width: 50px; height: 50px;" title="Mute/Unmute">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button class="tool-btn" onclick="endCall()"
+                        style="background: #f3f4f6; color: var(--text-main); width: 50px; height: 50px;"
+                        title="End Call">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
+                </div>
             </div>
 
-            <div id="student-join" style="display: block;">
-                <input type="text" id="join-id"
-                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;"
-                    placeholder="Enter Session ID">
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;"
-                    onclick="joinSession()">Join Session</button>
-            </div>
+            <audio id="remote-audio" autoplay></audio>
+        </div>
+    </div>
 
-            <div id="connect-status" style="margin-top: 12px; color: var(--text-sub); font-size: 0.9rem;"></div>
+    <!-- Dictionary Modal -->
+    <div id="dict-modal" class="modal">
+        <div class="modal-header">
+            <div class="modal-title">Dictionary</div>
+            <button class="close-modal" onclick="toggleModal('dict-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="search-box">
+                <input type="text" id="dict-input" class="search-input" placeholder="Enter word...">
+                <button class="btn btn-primary" onclick="lookupWord()">Search</button>
+            </div>
+            <div id="dict-results"></div>
+        </div>
+    </div>
+
+    <!-- Calculator Modal -->
+    <div id="calc-modal" class="modal" style="right: 360px;"> <!-- Offset slightly -->
+        <div class="modal-header">
+            <div class="modal-title">Math Tools</div>
+            <button class="close-modal" onclick="toggleModal('calc-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="calc-display" id="calc-display">0</div>
+            <div class="calc-grid">
+                <button class="calc-btn" onclick="calcInput('(')">(</button>
+                <button class="calc-btn" onclick="calcInput(')')">)</button>
+                <button class="calc-btn op" onclick="calcInput('%')">%</button>
+                <button class="calc-btn op" onclick="calcInput('/')">/</button>
+
+                <button class="calc-btn" onclick="calcInput('7')">7</button>
+                <button class="calc-btn" onclick="calcInput('8')">8</button>
+                <button class="calc-btn" onclick="calcInput('9')">9</button>
+                <button class="calc-btn op" onclick="calcInput('*')">×</button>
+
+                <button class="calc-btn" onclick="calcInput('4')">4</button>
+                <button class="calc-btn" onclick="calcInput('5')">5</button>
+                <button class="calc-btn" onclick="calcInput('6')">6</button>
+                <button class="calc-btn op" onclick="calcInput('-')">-</button>
+
+                <button class="calc-btn" onclick="calcInput('1')">1</button>
+                <button class="calc-btn" onclick="calcInput('2')">2</button>
+                <button class="calc-btn" onclick="calcInput('3')">3</button>
+                <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+                <button class="calc-btn" onclick="calcInput('0')">0</button>
+                <button class="calc-btn" onclick="calcInput('.')">.</button>
+                <button class="calc-btn" onclick="calcClear()">C</button>
+                <button class="calc-btn eq" onclick="calcSolve()">=</button>
+
+                <button class="calc-btn" onclick="calcInput('Math.sin(')">sin</button>
+                <button class="calc-btn" onclick="calcInput('Math.cos(')">cos</button>
+                <button class="calc-btn" onclick="calcInput('Math.tan(')">tan</button>
+                <button class="calc-btn" onclick="calcInput('Math.sqrt(')">√</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- Configuration ---
-        const CONFIG = { width: 800, height: 1100 };
-        const CHUNK_SIZE = 16 * 1024; // 16KB chunks
-
         // --- State ---
-        let state = {
-            tool: 'pen', color: '#000000', isDrawing: false, lastX: 0, lastY: 0,
-            pdfDoc: null, pageNum: 1, scale: 1, role: 'student', name: 'Guest',
-            peer: null, conn: null, peerId: null, localStream: null,
-            pdfBuffer: null // To store uploaded PDF for sync
-        };
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
 
-        // --- DOM Elements ---
-        const els = {
-            canvas: document.getElementById('drawing-canvas'),
-            pdfCanvas: document.getElementById('pdf-render'),
-            wrapper: document.getElementById('canvas-wrapper'),
-            chatHistory: document.getElementById('chat-history'),
-            chatInput: document.getElementById('chat-input'),
-            participants: document.getElementById('participants-list')
-        };
-        const ctx = els.canvas.getContext('2d');
-        const pdfCtx = els.pdfCanvas.getContext('2d');
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let currentScale = 1.0;
+        let textPos = { x: 0, y: 0 };
 
-        function initBoard() {
-            els.canvas.width = CONFIG.width;
-            els.canvas.height = CONFIG.height;
-            els.pdfCanvas.width = CONFIG.width;
-            els.pdfCanvas.height = CONFIG.height;
-            els.wrapper.style.width = CONFIG.width + 'px';
-            els.wrapper.style.height = CONFIG.height + 'px';
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 3;
+        // --- Elements ---
+        const container = document.getElementById('whiteboard-container');
+        const canvas = document.getElementById('drawing-canvas');
+        const pdfCanvas = document.getElementById('pdf-render');
+        const ctx = canvas.getContext('2d');
+        const pdfCtx = pdfCanvas.getContext('2d');
+        const fileUpload = document.getElementById('file-upload');
+        const pdfControls = document.getElementById('pdf-controls');
+        const pageNumSpan = document.getElementById('page-num');
+        const textOverlay = document.getElementById('text-overlay');
+        const textInput = document.getElementById('text-input');
+
+        // --- Initialization ---
+        function resizeCanvas() {
+            // Only resize if no PDF is loaded ( PDF sets strict size )
+            if (!pdfDoc) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight * 2; // Allow scrolling
+                pdfCanvas.width = canvas.width;
+                pdfCanvas.height = canvas.height;
+
+                // Retain context settings
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = 3;
+            }
         }
-        initBoard();
 
-        // --- Drawing ---
-        els.canvas.addEventListener('mousedown', (e) => {
-            state.isDrawing = true; const pos = getPos(e); state.lastX = pos.x; state.lastY = pos.y;
-            if (state.tool === 'text') { state.isDrawing = false; openTextTool(e.clientX, e.clientY, pos.x, pos.y); }
-        });
-        els.canvas.addEventListener('mousemove', (e) => {
-            if (!state.isDrawing) return;
-            const pos = getPos(e);
-            drawOnCanvas(state.lastX, state.lastY, pos.x, pos.y, state.color, state.tool === 'eraser');
-            sendData({ type: 'draw', x1: state.lastX, y1: state.lastY, x2: pos.x, y2: pos.y, color: state.color, isEraser: state.tool === 'eraser' });
-            state.lastX = pos.x; state.lastY = pos.y;
-        });
-        els.canvas.addEventListener('mouseup', () => state.isDrawing = false);
-        els.canvas.addEventListener('mouseout', () => state.isDrawing = false);
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', resizeCanvas);
 
-        function getPos(e) {
-            const rect = els.canvas.getBoundingClientRect();
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        // --- Interaction Logic ---
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
         }
-        function drawOnCanvas(x1, y1, x2, y2, color, isEraser) {
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-            if (isEraser) { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 20; }
-            else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = color; ctx.lineWidth = 3; }
+
+        function handleMouseDown(e) {
+            if (currentTool === 'text') {
+                const pos = getMousePos(e);
+                openTextTool(e.clientX, e.clientY, pos.x, pos.y);
+            } else {
+                startDrawing(e);
+            }
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getMousePos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(pos.x, pos.y);
+
+            if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 20;
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = 3;
+            }
+
             ctx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
         }
 
-        // --- PDF Chunking Logic ---
-        document.getElementById('file-upload').addEventListener('change', async (e) => {
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function setTool(tool, btn) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Close text overlay if switching tools
+            if (tool !== 'text') {
+                textOverlay.style.display = 'none';
+            }
+        }
+
+        function setColor(color) {
+            currentColor = color;
+            setTool('pen', document.querySelector('.tool-btn[onclick*="pen"]'));
+        }
+
+        function clearBoard() {
+            if (confirm('Clear the whiteboard?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Also clear PDF? Maybe not, usually just annotations.
+                // pdfCtx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+            }
+        }
+
+        // --- Text & Speech Logic ---
+        function openTextTool(screenX, screenY, canvasX, canvasY) {
+            textPos = { x: canvasX, y: canvasY + 20 }; // Adjust for baseline
+            textOverlay.style.display = 'block';
+            textOverlay.style.left = screenX + 'px';
+            textOverlay.style.top = screenY + 'px';
+            textInput.value = '';
+            textInput.focus();
+        }
+
+        function speakText() {
+            const text = textInput.value;
+            if (text) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function confirmText() {
+            const text = textInput.value;
+            if (text) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = currentColor;
+                ctx.font = '20px Outfit, sans-serif';
+                ctx.fillText(text, textPos.x, textPos.y);
+            }
+            textOverlay.style.display = 'none';
+        }
+
+        // --- PDF Logic ---
+        fileUpload.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
-                const buffer = await file.arrayBuffer();
-                state.pdfBuffer = buffer; // Store for late joiners
-                loadPDF(buffer);
-
-                // Start Transfer
-                if (state.conn && state.conn.open) {
-                    sendPDFChunks(buffer);
-                }
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const typedarray = new Uint8Array(event.target.result);
+                    loadPDF(typedarray);
+                };
+                reader.readAsArrayBuffer(file);
             }
         });
-
-        async function sendPDFChunks(buffer) {
-            updateFileStatus('Sending PDF...', true);
-            const total = Math.ceil(buffer.byteLength / CHUNK_SIZE);
-            const fileId = Date.now().toString();
-
-            sendData({ type: 'pdf_start', id: fileId, size: buffer.byteLength, totalChunks: total });
-
-            for (let i = 0; i < total; i++) {
-                const chunk = buffer.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                sendData({ type: 'pdf_chunk', id: fileId, index: i, data: chunk });
-
-                // Small delay to prevent clogging buffer
-                if (i % 10 === 0) await new Promise(r => setTimeout(r, 10));
-            }
-            updateFileStatus('PDF Sent', false);
-        }
-
-        let incomingChunks = {};
-        function handlePDFChunk(d) {
-            if (d.type === 'pdf_start') {
-                incomingChunks[d.id] = { chunks: [], total: d.totalChunks, received: 0 };
-                updateFileStatus('Receiving PDF...', true);
-            }
-            if (d.type === 'pdf_chunk' && incomingChunks[d.id]) {
-                incomingChunks[d.id].chunks[d.index] = d.data;
-                incomingChunks[d.id].received++;
-
-                if (incomingChunks[d.id].received === incomingChunks[d.id].total) {
-                    updateFileStatus('PDF Loaded', false);
-                    const combined = new Uint8Array(incomingChunks[d.id].chunks.reduce((acc, c) => acc + c.byteLength, 0));
-                    let offset = 0;
-                    for (let c of incomingChunks[d.id].chunks) {
-                        // Need to recreate array buffer logic or use Blob
-                    }
-                    // Simplified Reassembly: using Blob
-                    const blob = new Blob(incomingChunks[d.id].chunks, { type: 'application/pdf' });
-                    blob.arrayBuffer().then(loadPDF);
-                    delete incomingChunks[d.id];
-                }
-            }
-        }
 
         async function loadPDF(data) {
             try {
-                state.pdfDoc = await pdfjsLib.getDocument(data).promise;
-                state.pageNum = 1;
-                renderPage(1);
-                document.getElementById('pdf-controls-bar').style.display = 'flex';
-            } catch (e) { console.error(e); }
+                pdfDoc = await pdfjsLib.getDocument(data).promise;
+                pageNum = 1;
+                // Initial Fit
+                await renderPage(pageNum, true);
+                pdfControls.style.display = 'flex';
+                updatePageNum();
+            } catch (e) {
+                console.error("Error loading PDF", e);
+                alert("Error loading PDF");
+            }
         }
 
-        async function renderPage(num) {
-            if (!state.pdfDoc) return;
-            const page = await state.pdfDoc.getPage(num);
-            const viewport = page.getViewport({ scale: CONFIG.width / page.getViewport({ scale: 1 }).width });
-            await page.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
-            document.getElementById('page-num').textContent = `${num} / ${state.pdfDoc.numPages}`;
+        async function renderPage(num, doFit = false) {
+            pageRendering = true;
+
+            const page = await pdfDoc.getPage(num);
+
+            if (doFit) {
+                const unscaledViewport = page.getViewport({ scale: 1 });
+                const containerWidth = container.clientWidth - 40; // Padding
+                currentScale = containerWidth / unscaledViewport.width;
+                // Limit max scale to avoid huge zooms
+                if (currentScale > 2) currentScale = 2;
+            }
+
+            const viewport = page.getViewport({ scale: currentScale });
+
+            // Resize both canvases to match PDF page
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            // Re-apply context settings after resize
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 3;
+
+            const renderContext = {
+                canvasContext: pdfCtx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
         }
 
-        // --- Collaboration Setup ---
-        function selectSetupRole(r) {
-            state.role = r;
-            document.querySelectorAll('#setup-overlay .btn').forEach(b => b.style.borderColor = '#e5e7eb');
-            document.getElementById('btn-role-' + r).style.borderColor = 'var(--primary)';
-            document.getElementById('tutor-start').style.display = r === 'tutor' ? 'block' : 'none';
-            document.getElementById('student-join').style.display = r === 'student' ? 'block' : 'none';
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
         }
-        selectSetupRole('student');
 
-        function startSession() {
-            state.name = document.getElementById('setup-name').value || 'Tutor';
-            document.getElementById('connect-status').innerText = 'Initializing...';
-            state.peer = new Peer('tutor-' + Math.random().toString(36).substr(2, 5));
-            state.peer.on('open', (id) => {
-                document.getElementById('join-id').value = id;
-                document.getElementById('tutor-start').innerHTML = `
-                    <div style="font-size:1.2rem; font-weight:bold; color:var(--primary); margin-bottom:8px;">${id}</div>
-                    <button class="btn" style="width:100%; margin-top:12px;" onclick="enterRoom()">Enter Room</button>
-                 `;
-                initLocalMedia();
+        function changePage(offset) {
+            if (!pdfDoc) return;
+            const newPage = pageNum + offset;
+            if (newPage >= 1 && newPage <= pdfDoc.numPages) {
+                pageNum = newPage;
+                queueRenderPage(pageNum);
+                updatePageNum();
+                // Clear drawings on page change? Optional, but usually improved UX for new page
+                if (confirm("Clear current drawings for new page?")) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        function changeZoom(delta) {
+            if (!pdfDoc) return;
+            // Calculate new scale
+            let newScale = currentScale + delta;
+            if (newScale < 0.5) newScale = 0.5;
+            if (newScale > 3.0) newScale = 3.0;
+            currentScale = newScale;
+            queueRenderPage(pageNum);
+        }
+
+        function fitToScreen() {
+            if (!pdfDoc) return;
+            renderPage(pageNum, true);
+        }
+
+        function updatePageNum() {
+            if (pdfDoc) {
+                pageNumSpan.textContent = `${pageNum} / ${pdfDoc.numPages}`;
+            }
+        }
+
+        // --- Modal Logic ---
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            const isVisible = modal.style.display === 'flex';
+
+            // Close others
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+
+            if (!isVisible) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        // --- Sidebar Toggle ---
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.toolbar');
+            const isVisible = getComputedStyle(sidebar).display !== 'none';
+            sidebar.style.display = isVisible ? 'none' : 'flex';
+        }
+
+        // Make modals draggable (simple)
+        document.querySelectorAll('.modal-header').forEach(header => {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+            const modal = header.parentElement;
+
+            header.addEventListener("mousedown", dragStart);
+            document.addEventListener("mouseup", dragEnd);
+            document.addEventListener("mousemove", drag);
+
+            function dragStart(e) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                if (e.target === header || e.target.parentNode === header) {
+                    isDragging = true;
+                }
+            }
+
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    modal.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                }
+            }
+        });
+
+        // --- Dictionary Logic ---
+        async function lookupWord() {
+            const word = document.getElementById('dict-input').value.trim();
+            const resultsDiv = document.getElementById('dict-results');
+            if (!word) return;
+
+            resultsDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+
+            try {
+                const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                const data = await response.json();
+
+                if (Array.isArray(data)) {
+                    let html = '';
+                    const entry = data[0];
+                    html += `<h3>${entry.word} <span style="font-weight:400; font-size: 0.9em; color:#666">${entry.phonetic || ''}</span></h3>`;
+
+                    entry.meanings.forEach(meaning => {
+                        html += `<div class="def-group">`;
+                        html += `<div class="part-of-speech">${meaning.partOfSpeech}</div>`;
+                        meaning.definitions.slice(0, 3).forEach((def, i) => {
+                            html += `<div class="definition">${i + 1}. ${def.definition}</div>`;
+                        });
+                        html += `</div>`;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = 'Word not found.';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = 'Error fetching definition.';
+            }
+        }
+
+        // Enter key for dictionary
+        document.getElementById('dict-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') lookupWord();
+        });
+
+        // --- Calculator Logic ---
+        const display = document.getElementById('calc-display');
+
+        function calcInput(val) {
+            if (display.innerText === '0') display.innerText = '';
+            display.innerText += val;
+        }
+
+        function calcClear() {
+            display.innerText = '0';
+        }
+
+        function calcSolve() {
+            try {
+                // Warning: eval used for simplicity in this specific client-side only context.
+                // In production, use a math parser.
+                display.innerText = eval(display.innerText);
+            } catch (e) {
+                display.innerText = 'Error';
+            }
+        }
+
+        // --- Audio Check Logic ---
+        function testSpeaker() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+        async function initAudioCheck() {
+            const btn = document.getElementById('btn-check-mic');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Mic Active';
+                btn.classList.add('btn-primary');
+
+                // Visualizer
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                const javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+
+                microphone.connect(analyser);
+                analyser.connect(javascriptNode);
+                javascriptNode.connect(audioContext.destination);
+
+                const bar = document.getElementById('mic-level');
+
+                javascriptNode.onaudioprocess = function () {
+                    const array = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(array);
+                    let values = 0;
+                    const length = array.length;
+                    for (let i = 0; i < length; i++) {
+                        values += (array[i]);
+                    }
+                    const average = values / length;
+                    // Boost the visual
+                    bar.style.width = Math.min(100, average * 2) + '%';
+                }
+
+                // Keep stream for call later if possible, but PeerJS usually requests new one. 
+                // We'll stop this one when modal closes or call starts to avoid feedback/conflict, 
+                // OR just let browser handle it.
+
+            } catch (err) {
+                console.error(err);
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Mic Denied';
+                btn.style.background = '#fee2e2';
+                btn.style.color = '#ef4444';
+                alert('Microphone access denied. Please allow usage in your browser settings.');
+            }
+        }
+
+        // --- VoIP & PeerJS Logic ---
+        let peer = null;
+        let conn = null;
+        let myStream = null;
+        let myRole = 'student';
+        let isMuted = false;
+        let remoteRole = 'unknown';
+
+        function setRole(role) {
+            myRole = role;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            // Use contains check because button text varies slightly or logic handles it
+            const buttons = document.querySelectorAll('.role-btn');
+            if (role === 'student') buttons[0].classList.add('active');
+            else buttons[1].classList.add('active');
+
+            if (role === 'tutor') {
+                document.getElementById('tutor-section').style.display = 'block';
+                document.getElementById('student-section').style.display = 'none';
+            } else {
+                document.getElementById('tutor-section').style.display = 'none';
+                document.getElementById('student-section').style.display = 'block';
+            }
+        }
+
+        async function initPeer(isTutor = false) {
+            // Check if audio is ready
+            try {
+                // Ensure permission is granted before starting peer if not already
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (e) {
+                alert("Please allow microphone access first.");
+                return;
+            }
+
+            const name = document.getElementById('my-name').value || 'User';
+
+            if (isTutor) {
+                const id = 'tutor-' + Math.random().toString(36).substr(2, 9);
+                peer = new Peer(id);
+                updateStatus('Creating Session...');
+            } else {
+                peer = new Peer();
+                updateStatus('Initializing...');
+            }
+
+            peer.on('open', (id) => {
+                console.log('My ID:', id);
+                if (isTutor) {
+                    document.getElementById('my-peer-id').innerText = id;
+                    updateStatus('Waiting for student...');
+                }
             });
-            setupPeer();
+
+            peer.on('call', (call) => {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                    myStream = stream;
+                    call.answer(stream);
+                    call.on('stream', (remoteStream) => {
+                        handleRemoteStream(remoteStream);
+                    });
+                }, (err) => {
+                    alert('Microphone error: ' + err);
+                });
+            });
+
+            // Listen for data connections
+            peer.on('connection', (c) => {
+                conn = c;
+                setupDataConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                alert('Connection Error: ' + err.type);
+            });
         }
 
         function joinSession() {
-            state.name = document.getElementById('setup-name').value || 'Student';
-            const id = document.getElementById('join-id').value;
-            if (!id) return alert("Enter ID");
-            document.getElementById('connect-status').innerText = 'Connecting...';
-            state.peer = new Peer();
-            state.peer.on('open', () => {
-                state.conn = state.peer.connect(id, { metadata: { name: state.name } });
-                setupConn(state.conn);
-                initLocalMedia().then(() => {
-                    if (state.localStream) {
-                        const call = state.peer.call(id, state.localStream);
-                        call.on('stream', showRemoteVideo);
-                    }
+            const targetId = document.getElementById('target-id').value.trim();
+            if (!targetId) return alert('Please enter the Tutor ID');
+
+            const name = document.getElementById('my-name').value || 'Student';
+
+            if (!peer) {
+                peer = new Peer();
+                peer.on('open', (id) => {
+                    connectToPeer(targetId, name);
                 });
-                enterRoom();
+            } else {
+                connectToPeer(targetId, name);
+            }
+        }
+
+        function connectToPeer(targetId, name) {
+            updateStatus('Connecting...');
+
+            conn = peer.connect(targetId, {
+                metadata: { name: name, role: myRole }
             });
-            setupPeer();
-        }
+            setupDataConnection();
 
-        function initLocalMedia() {
-            return navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(stream => {
-                    setLocalStream(stream);
-                    return stream;
-                })
-                .catch(e => {
-                    console.error(e);
-                    alert("Camera/Mic blocked. If using file:// protocol, please use a local server or allow camera permissions.");
-                    return null;
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                myStream = stream;
+                const call = peer.call(targetId, stream);
+                call.on('stream', (remoteStream) => {
+                    handleRemoteStream(remoteStream);
                 });
-        }
-
-        function setupPeer() {
-            state.peer.on('connection', (c) => { state.conn = c; setupConn(c); });
-            state.peer.on('call', (call) => {
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                    setLocalStream(stream);
-                    call.answer(stream);
-                    call.on('stream', showRemoteVideo);
-                });
+            }, (err) => {
+                alert('Microphone access required.');
             });
         }
 
-        function startCall(id) {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                setLocalStream(stream);
-                const call = state.peer.call(id, stream);
-                call.on('stream', showRemoteVideo);
-            }).catch(e => {
-                console.error(e);
-                alert("Could not access Camera/Mic. Please ensure permissions allow it.");
-                // Fallback?
+        function setupDataConnection() {
+            conn.on('open', () => {
+                const myName = document.getElementById('my-name').value || 'User';
+                conn.send({ type: 'info', name: myName, role: myRole });
             });
-        }
 
-        function setupConn(c) {
-            c.on('open', () => {
-                c.send({ type: 'meta', name: state.name });
-                document.getElementById('connection-indicator').style.display = 'none';
-                // If tutor, send current PDF if exists
-                if (state.role === 'tutor' && state.pdfBuffer) {
-                    sendPDFChunks(state.pdfBuffer);
+            conn.on('data', (data) => {
+                if (data.type === 'info') {
+                    // Update Active UI with both names
+                    transitionToActiveUI(data.name, data.role);
                 }
             });
-            c.on('data', handleData);
         }
 
-        function handleData(d) {
-            if (d.type === 'draw') drawOnCanvas(d.x1, d.y1, d.x2, d.y2, d.color, d.isEraser);
-            if (d.type === 'pdf_start' || d.type === 'pdf_chunk') handlePDFChunk(d);
-            if (d.type === 'chat') addChatMessage(d.sender, d.msg, false);
-            if (d.type === 'page_change') { state.pageNum = d.page; renderPage(d.page); }
-            if (d.type === 'clear') ctx.clearRect(0, 0, CONFIG.width, CONFIG.height);
-            if (d.type === 'meta') {
-                const el = document.createElement('div'); el.className = 'participant-card';
-                el.innerHTML = `<div style="width:30px;height:30px;background:#e0e7ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">${d.name[0]}</div><div>${d.name}</div>`;
-                els.participants.appendChild(el);
+        function handleRemoteStream(stream) {
+            const audio = document.getElementById('remote-audio');
+            audio.srcObject = stream;
+        }
+
+        function transitionToActiveUI(remoteName, rRole = 'student') {
+            document.getElementById('audio-check-section').style.display = 'none'; // Hide setup stuff
+            document.getElementById('conn-setup').style.display = 'none';
+            document.getElementById('conn-active').style.display = 'block';
+
+            // Build Participant List
+            const myName = document.getElementById('my-name').value || 'Me';
+            const list = document.getElementById('participant-list');
+
+            // Icon helper
+            const getIcon = (role) => role === 'tutor' ? '<i class="fa-solid fa-chalkboard-user"></i>' : '<i class="fa-solid fa-user-graduate"></i>';
+            const getClass = (role) => role === 'tutor' ? 'tutor' : 'student';
+
+            // My Card
+            const myCard = `
+                <div class="participant-card local">
+                    <div class="p-avatar ${getClass(myRole)}">${getIcon(myRole)}</div>
+                    <div class="p-info">
+                        <span class="p-name">${myName} (You)</span>
+                        <span class="p-role">${myRole}</span>
+                    </div>
+                    <div class="p-status online" title="Active"></div>
+                </div>
+            `;
+
+            // Remote Card
+            const remoteCard = `
+                <div class="participant-card">
+                    <div class="p-avatar ${getClass(rRole)}">${getIcon(rRole)}</div>
+                    <div class="p-info">
+                        <span class="p-name">${remoteName}</span>
+                        <span class="p-role">${rRole}</span>
+                    </div>
+                    <div class="p-status online" title="Connected"></div>
+                </div>
+            `;
+
+            // Order: Tutor first usually looks better, or Me first.
+            // Let's do: Tutor top.
+            if (myRole === 'tutor') {
+                list.innerHTML = myCard + remoteCard;
+            } else {
+                list.innerHTML = remoteCard + myCard;
             }
+
+            document.getElementById('btn-connect').innerHTML = '<i class="fa-solid fa-headset"></i> Active';
+            document.getElementById('btn-connect').classList.add('btn-primary');
         }
 
-        function sendData(d) { if (state.conn && state.conn.open) state.conn.send(d); }
-
-        function enterRoom() { document.getElementById('setup-overlay').style.display = 'none'; }
-
-        // --- Video ---
-        function setLocalStream(stream) {
-            state.localStream = stream;
-            document.getElementById('self-video').srcObject = stream;
+        function updateStatus(msg) {
+            // Can add toast later
+            console.log(msg);
         }
-        function showRemoteVideo(stream) {
-            document.getElementById('remote-video-container').style.display = 'block';
-            document.getElementById('remote-video').srcObject = stream;
-        }
+
         function toggleMute() {
-            if (!state.localStream) return;
-            const track = state.localStream.getAudioTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('mute-btn').style.background = track.enabled ? 'rgba(255,255,255,0.2)' : '#ef4444';
-        }
-        function toggleVideo() {
-            if (!state.localStream) return;
-            const track = state.localStream.getVideoTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('video-btn').style.background = track.enabled ? 'rgba(255,255,255,0.2)' : '#ef4444';
-        }
-
-        // --- Chat ---
-        function sendChat() {
-            const txt = els.chatInput.value;
-            if (!txt) return;
-            addChatMessage('You', txt, true);
-            sendData({ type: 'chat', msg: txt, sender: state.name });
-            els.chatInput.value = '';
-        }
-        function handleChatKey(e) { if (e.key === 'Enter') sendChat(); }
-        function addChatMessage(sender, msg, isSelf) {
-            const div = document.createElement('div'); div.className = 'chat-msg' + (isSelf ? ' self' : '');
-            div.innerHTML = `<div class="chat-header"><span class="chat-sender">${sender}</span></div><span class="chat-text">${msg}</span>`;
-            els.chatHistory.appendChild(div); els.chatHistory.scrollTop = els.chatHistory.scrollHeight;
-        }
-
-        // --- Utils ---
-        function updateFileStatus(msg, show) {
-            document.getElementById('file-status').style.display = show ? 'inline-block' : 'none';
-            document.getElementById('file-status-text').innerText = msg;
-        }
-        function changePage(o) {
-            const n = state.pageNum + o;
-            if (state.pdfDoc && n >= 1 && n <= state.pdfDoc.numPages) {
-                state.pageNum = n; renderPage(n); sendData({ type: 'page_change', page: n });
+            if (!myStream) return;
+            isMuted = !isMuted;
+            myStream.getAudioTracks()[0].enabled = !isMuted;
+            const btn = document.getElementById('mute-btn');
+            if (isMuted) {
+                btn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+                btn.style.background = '#fee2e2';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                btn.style.background = '#dcfce7';
             }
         }
-        function changeZoom(d) {
-            // Config-based fixed zoom for POC mainly
+
+        function endCall() {
+            if (peer) peer.destroy();
+            if (myStream) myStream.getTracks().forEach(track => track.stop());
+            location.reload();
         }
-        function clearBoard(e) { ctx.clearRect(0, 0, CONFIG.width, CONFIG.height); if (e) sendData({ type: 'clear' }); }
 
-        // Tool helpers
-        function setTool(t, b) { state.tool = t; document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active')); if (b) b.classList.add('active'); }
-        function setColor(c) { state.color = c; setTool('pen', document.querySelector('.tool-btn')); }
-        function toggleModal(id) { const m = document.getElementById(id); m.style.display = (m.style.display === 'flex' ? 'none' : 'flex'); }
-
-        // Text tool
-        let tPos = {};
-        function openTextTool(sx, sy, cx, cy) { tPos = { x: cx, y: cy + 20 }; els.textOverlay.style.display = 'block'; els.textOverlay.style.left = sx + 'px'; els.textOverlay.style.top = sy + 'px'; document.getElementById('text-input').focus(); }
-        function confirmText() {
-            const v = document.getElementById('text-input').value;
-            if (v) {
-                ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = state.color; ctx.font = '20px Outfit'; ctx.fillText(v, tPos.x, tPos.y);
-                sendData({ type: 'text', text: v, x: tPos.x, y: tPos.y, color: state.color });
+        function copyId() {
+            const id = document.getElementById('my-peer-id').innerText;
+            if (id && !id.includes('Generating')) {
+                navigator.clipboard.writeText(id);
+                // quick visual feedback
+                const el = document.getElementById('my-peer-id');
+                const orig = el.style.backgroundColor;
+                el.style.backgroundColor = '#dcfce7';
+                setTimeout(() => el.style.backgroundColor = orig, 300);
             }
-            els.textOverlay.style.display = 'none';
         }
 
     </script>
